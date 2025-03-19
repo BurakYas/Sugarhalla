@@ -6,10 +6,26 @@ public class PlayerControlScripts : MonoBehaviour
 {
     // Küp kontrol ve hareketleri için deneme script dosyasıdır.
  
+    [Header("References")]
+    private Rigidbody _rigidBody;
+    
+    [Header("Movement Settings")]
     [SerializeField] private float _rollingSpeed = 5;
     private bool _isMoving;
 
-    private Rigidbody _rigidBody;
+    [Header("Jumping Settings")]
+    
+    [SerializeField] private KeyCode _jumpKey;
+    [SerializeField] private float _jumpForce;
+    [SerializeField] private bool _canJump;
+
+    [SerializeField] private float _jumpCoolDown;
+
+    [Header("Ground Check Settings")]
+
+    [SerializeField] private float _playerHeight;
+    [SerializeField] private LayerMask _groundLayer;
+   
 
     void Awake()
     {
@@ -31,6 +47,36 @@ public class PlayerControlScripts : MonoBehaviour
             var axis = Vector3.Cross(Vector3.up, dir);
             StartCoroutine(Roll(anchor,axis));
         }
+    }
+    void FixedUpdate()
+    {
+        SetInputs();
+    }
+
+    private void SetInputs()
+    {
+        if(Input.GetKey(_jumpKey) && _canJump && onGround())
+        {
+            // Zıplama İşlemi Gerçekleşecek
+            _canJump = false;
+            PlayerJump();
+            Invoke(nameof(ResetJumping), _jumpCoolDown);
+        }
+    }
+
+    private void PlayerJump()
+    {
+        _rigidBody.linearVelocity = new Vector3(_rigidBody.linearVelocity.x, 0f, _rigidBody.linearVelocity.z);
+        _rigidBody.AddForce(transform.up * _jumpForce, ForceMode.Impulse);
+    }
+
+    private void ResetJumping()
+    {
+        _canJump = true;
+    }
+    private bool onGround()
+    {
+      return Physics.Raycast(transform.position, Vector3.down, _playerHeight * 0.5f + 0.2f, _groundLayer);
     }
 
     IEnumerator Roll(Vector3 anchor,Vector3 axis)
