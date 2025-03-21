@@ -5,8 +5,11 @@ public class Player : MonoBehaviour
 {
     [SerializeField] private float rollSpeed = 5;
     [SerializeField] private float jumpForce = 10;
+    [SerializeField] private float dashSpeed = 20;
+    [SerializeField] private float dashDuration = 0.2f;
     private bool isMoving;
     private bool isGrounded;
+    private bool isDashing;
     private Rigidbody rb;
     private Vector3 currentDirection;
 
@@ -18,33 +21,41 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if (isGrounded)
+        if (!isDashing)
         {
-            if (Input.GetKey(KeyCode.A))
+            if (isGrounded)
             {
-                currentDirection = Vector3.left;
-                Assemble(Vector3.left);
+                if (Input.GetKey(KeyCode.A))
+                {
+                    currentDirection = Vector3.left;
+                    Assemble(Vector3.left);
+                }
+                else if (Input.GetKey(KeyCode.D))
+                {
+                    currentDirection = Vector3.right;
+                    Assemble(Vector3.right);
+                }
+                else if (Input.GetKey(KeyCode.W))
+                {
+                    currentDirection = Vector3.forward;
+                    Assemble(Vector3.forward);
+                }
+                else if (Input.GetKey(KeyCode.S))
+                {
+                    currentDirection = Vector3.back;
+                    Assemble(Vector3.back);
+                }
             }
-            else if (Input.GetKey(KeyCode.D))
-            {
-                currentDirection = Vector3.right;
-                Assemble(Vector3.right);
-            }
-            else if (Input.GetKey(KeyCode.W))
-            {
-                currentDirection = Vector3.forward;
-                Assemble(Vector3.forward);
-            }
-            else if (Input.GetKey(KeyCode.S))
-            {
-                currentDirection = Vector3.back;
-                Assemble(Vector3.back);
-            }
-        }
 
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
-        {
-            Jump();
+            if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+            {
+                Jump();
+            }
+
+            if (Input.GetKeyDown(KeyCode.LeftShift) && !isDashing)
+            {
+                StartCoroutine(Dash());
+            }
         }
     }
 
@@ -54,7 +65,7 @@ public class Player : MonoBehaviour
 
         var anchor = transform.position + (Vector3.down + dir) * 0.5f; // Center of the cube
         var axis = Vector3.Cross(Vector3.up, dir); // Axis of rotation
-        StartCoroutine(Roll(anchor, axis)); 
+        StartCoroutine(Roll(anchor, axis));
     }
 
     private IEnumerator Roll(Vector3 anchor, Vector3 axis)
@@ -79,6 +90,21 @@ public class Player : MonoBehaviour
             rb.linearVelocity = jumpVelocity;
             isGrounded = false;
         }
+    }
+
+    private IEnumerator Dash()
+    {
+        isDashing = true;
+        float startTime = Time.time;
+
+        while (Time.time < startTime + dashDuration)
+        {
+            rb.linearVelocity = currentDirection * dashSpeed;
+            yield return null;
+        }
+
+        rb.linearVelocity = Vector3.zero;
+        isDashing = false;
     }
 
     private void OnCollisionEnter(Collision collision)
