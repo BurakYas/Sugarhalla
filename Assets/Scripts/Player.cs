@@ -5,8 +5,11 @@ public class Player : MonoBehaviour
 {
     [SerializeField] private float rollSpeed = 5;
     [SerializeField] private float jumpForce = 10;
-    [SerializeField] private float dashSpeed = 20;
-    [SerializeField] private float dashDuration = 0.2f;
+    [SerializeField] private float dashSpeed = 30;
+    [SerializeField] private float dashDuration = 0.1f;
+    [SerializeField] private float fallMultiplier = 2.5f;
+    [SerializeField] private float lowJumpMultiplier = 2f;
+
     private bool isMoving;
     private bool isGrounded;
     private bool isDashing;
@@ -16,8 +19,13 @@ public class Player : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        rb.linearDamping = 1; // Add some drag to smooth out the movement
+
+        // Küpün daha hızlı düşmesi ve titremeyi engellemek için yerçekimini artırıyoruz.
+        Physics.gravity = new Vector3(0, -15f, 0); // Normalde -9.81, daha güçlü yerçekimi verdik
+
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic; // Daha doğru çarpışma algılama
     }
+
 
     void Update()
     {
@@ -52,9 +60,22 @@ public class Player : MonoBehaviour
                 Jump();
             }
 
-            if (Input.GetKeyDown(KeyCode.LeftShift) && !isDashing)
+            if (Input.GetKeyDown(KeyCode.LeftShift))
             {
                 StartCoroutine(Dash());
+            }
+        }
+
+        // Daha hızlı düşme mekaniği
+        if (!isGrounded && !isDashing)
+        {
+            if (rb.linearVelocity.y < 0)
+            {
+                rb.linearVelocity += Vector3.up * Physics.gravity.y * (fallMultiplier - 1) * Time.deltaTime;
+            }
+            else if (rb.linearVelocity.y > 0 && !Input.GetKey(KeyCode.Space))
+            {
+                rb.linearVelocity += Vector3.up * Physics.gravity.y * (lowJumpMultiplier - 1) * Time.deltaTime;
             }
         }
     }
@@ -63,8 +84,8 @@ public class Player : MonoBehaviour
     {
         if (isMoving) return;
 
-        var anchor = transform.position + (Vector3.down + dir) * 0.5f; // Center of the cube
-        var axis = Vector3.Cross(Vector3.up, dir); // Axis of rotation
+        var anchor = transform.position + (Vector3.down + dir) * 0.5f;
+        var axis = Vector3.Cross(Vector3.up, dir);
         StartCoroutine(Roll(anchor, axis));
     }
 
@@ -86,7 +107,10 @@ public class Player : MonoBehaviour
     {
         if (rb != null)
         {
-            Vector3 jumpVelocity = currentDirection * rollSpeed + Vector3.up * jumpForce;
+            transform.position += Vector3.up * 0.1f; // Küçük bir yükselme ekleyerek titremeyi azalt
+
+            // Hareket yönüne göre ileri momentum ekleme, mevcut hızını bozmayacak şekilde ayarlandı
+            Vector3 jumpVelocity = rb.linearVelocity + (currentDirection * rollSpeed * 0.75f) + Vector3.up * jumpForce;
             rb.linearVelocity = jumpVelocity;
             isGrounded = false;
         }
@@ -97,13 +121,11 @@ public class Player : MonoBehaviour
         isDashing = true;
         float startTime = Time.time;
 
-        while (Time.time < startTime + dashDuration)
-        {
-            rb.linearVelocity = currentDirection * dashSpeed;
-            yield return null;
-        }
+        Vector3 dashVelocity = currentDirection * dashSpeed;
+        rb.linearVelocity = new Vector3(dashVelocity.x, 0, dashVelocity.z); // Y ekseninde süzülmeyi engelledik
 
-        rb.linearVelocity = Vector3.zero;
+        yield return new WaitForSeconds(dashDuration);
+
         isDashing = false;
     }
 
