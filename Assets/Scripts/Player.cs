@@ -13,6 +13,7 @@ public class Player : MonoBehaviour
     private bool isMoving;
     private bool isGrounded;
     private bool isDashing;
+    private bool canDoubleJump;
     private Rigidbody rb;
     private Vector3 currentDirection;
 
@@ -20,13 +21,11 @@ public class Player : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
 
-        // Küpün daha hızlı düşmesi ve titremeyi engellemek için yerçekimini artırıyoruz.
-        Physics.gravity = new Vector3(0, -15f, 0); // Normalde -9.81, daha güçlü yerçekimi verdik
-
-        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic; // Daha doğru çarpışma algılama
+        Physics.gravity = new Vector3(0, -15f, 0);
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
     }
 
-
+    [System.Obsolete]
     void Update()
     {
         if (!isDashing)
@@ -55,7 +54,7 @@ public class Player : MonoBehaviour
                 }
             }
 
-            if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+            if (Input.GetKeyDown(KeyCode.Space))
             {
                 Jump();
             }
@@ -65,17 +64,20 @@ public class Player : MonoBehaviour
                 StartCoroutine(Dash());
             }
         }
+    }
 
-        // Daha hızlı düşme mekaniği
+    [System.Obsolete]
+    void FixedUpdate()
+    {
         if (!isGrounded && !isDashing)
         {
-            if (rb.linearVelocity.y < 0)
+            if (rb.velocity.y < 0)
             {
-                rb.linearVelocity += Vector3.up * Physics.gravity.y * (fallMultiplier - 1) * Time.deltaTime;
+                rb.velocity += Vector3.up * Physics.gravity.y * (fallMultiplier - 1) * Time.fixedDeltaTime;
             }
-            else if (rb.linearVelocity.y > 0 && !Input.GetKey(KeyCode.Space))
+            else if (rb.velocity.y > 0 && !Input.GetKey(KeyCode.Space))
             {
-                rb.linearVelocity += Vector3.up * Physics.gravity.y * (lowJumpMultiplier - 1) * Time.deltaTime;
+                rb.velocity += Vector3.up * Physics.gravity.y * (lowJumpMultiplier - 1) * Time.fixedDeltaTime;
             }
         }
     }
@@ -103,33 +105,55 @@ public class Player : MonoBehaviour
         isMoving = false;
     }
 
+    [System.Obsolete]
     private void Jump()
     {
-        if (rb != null)
+        if (isGrounded)
         {
-            transform.position += Vector3.up * 0.1f; // Küçük bir yükselme ekleyerek titremeyi azalt
-
-            // Hareket yönüne göre ileri momentum ekleme, mevcut hızını bozmayacak şekilde ayarlandı
-            Vector3 jumpVelocity = rb.linearVelocity + (currentDirection * rollSpeed * 0.75f) + Vector3.up * jumpForce;
-            rb.linearVelocity = jumpVelocity;
-            isGrounded = false;
+            canDoubleJump = true;
+            PerformJump();
+        }
+        else if (canDoubleJump)
+        {
+            canDoubleJump = false;
+            PerformJump();
         }
     }
 
+    [System.Obsolete]
+    private void PerformJump()
+    {
+        transform.position += Vector3.up * 0.1f;
+
+        Vector3 jumpVelocity = rb.velocity + (currentDirection * rollSpeed * 0.75f) + Vector3.up * jumpForce;
+        rb.velocity = jumpVelocity;
+
+        isGrounded = false;
+    }
+
+    [System.Obsolete]
     private IEnumerator Dash()
     {
         isDashing = true;
         float startTime = Time.time;
 
-        Vector3 dashVelocity = currentDirection * dashSpeed;
-        rb.linearVelocity = new Vector3(dashVelocity.x, 0, dashVelocity.z); // Y ekseninde süzülmeyi engelledik
+        while (Time.time < startTime + dashDuration)
+        {
+            if (Input.GetKey(KeyCode.A)) currentDirection = Vector3.left;
+            if (Input.GetKey(KeyCode.D)) currentDirection = Vector3.right;
+            if (Input.GetKey(KeyCode.W)) currentDirection = Vector3.forward;
+            if (Input.GetKey(KeyCode.S)) currentDirection = Vector3.back;
 
-        yield return new WaitForSeconds(dashDuration);
+            Vector3 dashVelocity = currentDirection * dashSpeed;
+            rb.velocity = new Vector3(dashVelocity.x, rb.velocity.y, dashVelocity.z);
+            yield return null;
+        }
 
+        rb.velocity = Vector3.zero;
         isDashing = false;
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnCollisionStay(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
         {
