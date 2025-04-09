@@ -25,7 +25,6 @@ public class Player : MonoBehaviour
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
     }
 
-    [System.Obsolete]
     void Update()
     {
         if (!isDashing)
@@ -66,18 +65,17 @@ public class Player : MonoBehaviour
         }
     }
 
-    [System.Obsolete]
     void FixedUpdate()
     {
         if (!isGrounded && !isDashing)
         {
-            if (rb.velocity.y < 0)
+            if (rb.linearVelocity.y < 0) // Updated from 'velocity' to 'linearVelocity'
             {
-                rb.velocity += Vector3.up * Physics.gravity.y * (fallMultiplier - 1) * Time.fixedDeltaTime;
+                rb.linearVelocity += Vector3.up * Physics.gravity.y * (fallMultiplier - 1) * Time.fixedDeltaTime;
             }
-            else if (rb.velocity.y > 0 && !Input.GetKey(KeyCode.Space))
+            else if (rb.linearVelocity.y > 0 && !Input.GetKey(KeyCode.Space)) // Updated from 'velocity' to 'linearVelocity'
             {
-                rb.velocity += Vector3.up * Physics.gravity.y * (lowJumpMultiplier - 1) * Time.fixedDeltaTime;
+                rb.linearVelocity += Vector3.up * Physics.gravity.y * (lowJumpMultiplier - 1) * Time.fixedDeltaTime;
             }
         }
     }
@@ -105,7 +103,6 @@ public class Player : MonoBehaviour
         isMoving = false;
     }
 
-    [System.Obsolete]
     private void Jump()
     {
         if (isGrounded)
@@ -120,18 +117,16 @@ public class Player : MonoBehaviour
         }
     }
 
-    [System.Obsolete]
     private void PerformJump()
     {
         transform.position += Vector3.up * 0.1f;
 
-        Vector3 jumpVelocity = rb.velocity + (currentDirection * rollSpeed * 0.75f) + Vector3.up * jumpForce;
-        rb.velocity = jumpVelocity;
+        Vector3 jumpVelocity = rb.linearVelocity + (currentDirection * rollSpeed * 0.75f) + Vector3.up * jumpForce; // Updated from 'velocity' to 'linearVelocity'
+        rb.linearVelocity = jumpVelocity; // Updated from 'velocity' to 'linearVelocity'
 
         isGrounded = false;
     }
 
-    [System.Obsolete]
     private IEnumerator Dash()
     {
         isDashing = true;
@@ -145,11 +140,11 @@ public class Player : MonoBehaviour
             if (Input.GetKey(KeyCode.S)) currentDirection = Vector3.back;
 
             Vector3 dashVelocity = currentDirection * dashSpeed;
-            rb.velocity = new Vector3(dashVelocity.x, rb.velocity.y, dashVelocity.z);
+            rb.linearVelocity = new Vector3(dashVelocity.x, rb.linearVelocity.y, dashVelocity.z); // Updated from 'velocity' to 'linearVelocity'
             yield return null;
         }
 
-        rb.velocity = Vector3.zero;
+        rb.linearVelocity = Vector3.zero; // Updated from 'velocity' to 'linearVelocity'
         isDashing = false;
     }
 
