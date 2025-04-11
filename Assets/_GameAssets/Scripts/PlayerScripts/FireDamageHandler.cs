@@ -37,9 +37,13 @@ public class FireDamageHandler : MonoBehaviour
     {
         while (isInFire)
         {
-            playerHealthController.TakeDamage(fireDamage);
-            Debug.Log("Ateşin içinde! Sağlık: " + playerHealthController.GetCurrentHealth());
-            yield return new WaitForSeconds(damageInterval); // 1 saniye bekle (damageInterval)
+            if (playerHealthController != null)
+            {
+                // Ateş hasarını uygula ve DeathCause.Fire gönder
+                playerHealthController.TakeDamage(fireDamage, PlayerHealthController.DeathCause.Fire);
+                Debug.Log("Ateşin içinde! Sağlık: " + playerHealthController.GetCurrentHealth());
+            }
+            yield return new WaitForSeconds(damageInterval); // Hasar alma aralığı kadar bekle
         }
     }
 }
