@@ -10,6 +10,8 @@ public class NewControlHandler : MonoBehaviour
     [SerializeField] private float airControlMultiplier = 0.5f; // Havada hareket kontrolü için çarpan
     [SerializeField] private float maxAngularVelocity = 10f; // Maksimum açısal hız sınırı
 
+    public ParticleSystem sugarParticles; // Şeker parçacık sistemi
+
     [Header("References")]
     [SerializeField] private Transform cameraTransform; // Kameranın Transform referansı
     private Rigidbody _rigidBody; // Karakterin Rigidbody bileşeni
@@ -50,6 +52,28 @@ public class NewControlHandler : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space) && IsGrounded())
         {
             Jump();
+        }
+
+        // Vfx kontrolü
+        if (_rigidBody.linearVelocity.magnitude > 0.1f) // Updated to use linearVelocity
+        {
+            if (!sugarParticles.isPlaying)
+                sugarParticles.Play();
+        }
+        else
+        {
+            if (sugarParticles.isPlaying)
+                sugarParticles.Stop();
+        }
+
+    }
+
+    void LateUpdate()
+    {
+        if (sugarParticles != null)
+        {
+            sugarParticles.transform.position = transform.position;
+            sugarParticles.transform.rotation = Quaternion.identity;
         }
     }
 
