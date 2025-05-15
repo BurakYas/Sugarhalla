@@ -132,10 +132,10 @@ public class PlayerHealthController : MonoBehaviour
     // Ateşe temas eden bir fonksiyon
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Fire"))
+        if (other.gameObject.layer == LayerMask.NameToLayer("Fire"))
         {
             Debug.Log("Ateşe temas edildi!");
-            TakeDamage(maxHealth, DeathCause.Fire); // Ateşe temas ederse direkt öl
+           
         }
     }
 }
