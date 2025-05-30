@@ -19,6 +19,7 @@ public class PlayerHealthController : MonoBehaviour
         Fire,
         Enemy,
         Water,
+        Crash,
     }
 
     void Start()
@@ -80,7 +81,7 @@ public class PlayerHealthController : MonoBehaviour
     }
 
     // Ölüm fonksiyonu
-    private void Die(DeathCause cause)
+    public void Die(DeathCause cause)
     {
         switch (cause)
         {
@@ -92,6 +93,9 @@ public class PlayerHealthController : MonoBehaviour
                 break;
             case DeathCause.Enemy:
                 Debug.Log("Karakter bir düşman tarafından öldürüldü!");
+                break;
+            case DeathCause.Crash:
+                Debug.Log("Karakter bir yere çarparak öldü!");
                 break;
             default:
                 Debug.Log("Karakter bilinmeyen bir nedenle öldü!");
