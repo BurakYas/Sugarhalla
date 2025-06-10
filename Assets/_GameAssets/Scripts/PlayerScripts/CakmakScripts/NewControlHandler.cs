@@ -3,69 +3,83 @@ using UnityEngine;
 public class NewControlHandler : MonoBehaviour
 {
     [Header("Movement Settings")]
-    [SerializeField] public float moveSpeed = 5f; // Hareket hızı
-    [SerializeField] private float jumpForce = 5f; // Zıplama kuvveti
-    [SerializeField] private LayerMask groundLayer; // Zemin kontrolü için layer
-    [SerializeField] public float torqueMultiplier = 1.5f; // Yuvarlanma için tork çarpanı
-    [SerializeField] private float airControlMultiplier = 0.5f; // Havada hareket kontrolü için çarpan
-    [SerializeField] public float maxAngularVelocity = 10f; // Maksimum açısal hız sınırı
-    [SerializeField] private float maxSpeed = 20f; // Maksimum hız sınırı
+    [SerializeField] public float moveSpeed = 5f;
+    [SerializeField] private float minJumpForce = 3f; // Kısa basışta uygulanacak minimum kuvvet
+    [SerializeField] private float maxJumpForce = 10f; // Maksimum toplam zıplama kuvveti
+    [SerializeField] private float jumpHoldForce = 20f; // Basılı tutarken uygulanacak ek kuvvet (saniyede)
+    [SerializeField] private float jumpHoldTimeLimit = 0.25f; // Maksimum ek kuvvet süresi (saniye)
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] public float torqueMultiplier = 1.5f;
+    [SerializeField] private float airControlMultiplier = 0.5f;
+    [SerializeField] public float maxAngularVelocity = 10f;
+    [SerializeField] private float maxSpeed = 20f;
+    [SerializeField] private float maxAirSpeed = 3f;
 
     public bool canJump;
 
-    public Vector3 GetInputDirection()
-    {
-        // Replace this with the actual logic to get the player's input direction
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
-        return new Vector3(horizontal, 0, vertical);
-    }
-
     [Header("References")]
-    [SerializeField] private Transform cameraTransform; // Kameranın Transform referansı
-    private Rigidbody _rigidBody; // Karakterin Rigidbody bileşeni
+    [SerializeField] private Transform cameraTransform;
+    private Rigidbody _rigidBody;
 
-    private bool _isGrounded = false; // Karakterin zeminde olup olmadığını kontrol eder
+    private bool _isGrounded = false;
+    private Vector3 previousVelocity;
+
+    // Variable jump değişkenleri
+    private bool isJumping = false;
+    private float currentJumpForce = 0f;
+    private float jumpHoldTimer = 0f;
 
     void Start()
     {
         canJump = true;
-        // Rigidbody bileşenini al
         _rigidBody = GetComponent<Rigidbody>();
         if (_rigidBody == null)
         {
             Debug.LogError("Rigidbody bileşeni bulunamadı!");
         }
 
-        // Kamera referansını kontrol et
         if (cameraTransform == null)
         {
-            cameraTransform = Camera.main.transform; // Eğer atanmadıysa Main Camera'yı kullan
+            cameraTransform = Camera.main.transform;
         }
 
-        // Rigidbody'nin maksimum açısal hızını ayarla
         _rigidBody.maxAngularVelocity = maxAngularVelocity;
     }
 
     void Update()
     {
-        // Hareket girişlerini al
         Vector3 inputDirection = new Vector3(Input.GetAxis("Horizontal"), 0f, Input.GetAxis("Vertical"));
-
-        // Kameraya göre hareket yönünü hesapla
         Vector3 moveDirection = GetCameraRelativeDirection(inputDirection);
 
-        // Hareketi uygula
         Roll(moveDirection);
 
-        // Zıplama girişini kontrol et
+        // Zıplama başlat
         if (Input.GetKeyDown(KeyCode.Space) && IsGrounded())
         {
-
             Jump(moveDirection);
+            isJumping = true;
+            jumpHoldTimer = 0f;
+            currentJumpForce = minJumpForce;
         }
 
-        // Havadayken hareketi kontrol et
+        // Zıplama tuşu basılı tutuluyorsa ve limit aşılmadıysa ek kuvvet uygula
+        if (isJumping && Input.GetKey(KeyCode.Space) && jumpHoldTimer < jumpHoldTimeLimit && currentJumpForce < maxJumpForce)
+        {
+            float addForce = jumpHoldForce * Time.deltaTime;
+            if (currentJumpForce + addForce > maxJumpForce)
+                addForce = maxJumpForce - currentJumpForce;
+
+            _rigidBody.AddForce(Vector3.up * addForce, ForceMode.Impulse);
+            currentJumpForce += addForce;
+            jumpHoldTimer += Time.deltaTime;
+        }
+
+        // Tuş bırakılırsa veya limit dolarsa ek kuvveti durdur
+        if (isJumping && (!Input.GetKey(KeyCode.Space) || currentJumpForce >= maxJumpForce || jumpHoldTimer >= jumpHoldTimeLimit))
+        {
+            isJumping = false;
+        }
+
         if (!IsGrounded())
         {
             AirMove(moveDirection);
@@ -74,14 +88,10 @@ public class NewControlHandler : MonoBehaviour
 
     private Vector3 GetCameraRelativeDirection(Vector3 inputDirection)
     {
-        // Kameranın yönüne göre hareket yönünü hesapla
         Vector3 cameraForward = cameraTransform.forward;
         Vector3 cameraRight = cameraTransform.right;
-
-        // Y eksenini sıfırla (yatay düzlemde hareket)
         cameraForward.y = 0f;
         cameraRight.y = 0f;
-
         return (cameraForward.normalized * inputDirection.z + cameraRight.normalized * inputDirection.x).normalized;
     }
 
@@ -89,14 +99,9 @@ public class NewControlHandler : MonoBehaviour
     {
         if (direction != Vector3.zero)
         {
-            // Havada mı yoksa zeminde mi olduğuna göre tork çarpanını belirle
             float currentTorqueMultiplier = IsGrounded() ? torqueMultiplier : torqueMultiplier * airControlMultiplier;
-
-            // Hareket yönüne göre tork uygula
             Vector3 torque = new Vector3(direction.z, 0f, -direction.x) * currentTorqueMultiplier;
             _rigidBody.AddTorque(torque, ForceMode.Force);
-
-            // Açısal hızı sınırla
             LimitAngularVelocity();
         }
     }
@@ -105,32 +110,30 @@ public class NewControlHandler : MonoBehaviour
     {
         if (canJump)
         {
-              // Zıplama kuvvetini uygula (dikey kuvvet)
-        _rigidBody.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            Vector3 velocity = _rigidBody.linearVelocity;
+            velocity.x *= 0.3f;
+            velocity.z *= 0.3f;
+            velocity.y = 0f;
+            _rigidBody.linearVelocity = velocity;
 
-        // Eğer bir yön girdisi varsa, ileri doğru bir kuvvet uygula
-        if (direction != Vector3.zero)
-        {
-            // İleri doğru kuvvet uygula
-            Vector3 jumpForceDirection = direction.normalized * moveSpeed * 0.5f; // Kuvveti azaltmak için 0.5 çarpanı
-            _rigidBody.AddForce(jumpForceDirection, ForceMode.Impulse);
-        }
-        }
-       
+            _rigidBody.AddForce(Vector3.up * minJumpForce, ForceMode.Impulse);
 
-        // Hızı sınırla
-        //LimitVelocity();
+            // Küçük de olsa ileri kuvvet uygula
+            if (direction != Vector3.zero)
+            {
+                Vector3 jumpForward = direction.normalized * moveSpeed * 0.12f; // 0.12f ile ileri kuvveti ayarlayabilirsin
+                _rigidBody.AddForce(jumpForward, ForceMode.Impulse);
+            }
+        }
     }
 
     private bool IsGrounded()
     {
-        // Zemin kontrolü için raycast
         return Physics.Raycast(transform.position, Vector3.down, 1.1f, groundLayer);
     }
 
     private void LimitAngularVelocity()
     {
-        // Açısal hızı sınırla
         if (_rigidBody.angularVelocity.magnitude > maxAngularVelocity)
         {
             _rigidBody.angularVelocity = _rigidBody.angularVelocity.normalized * maxAngularVelocity;
@@ -139,38 +142,18 @@ public class NewControlHandler : MonoBehaviour
 
     private void AirMove(Vector3 direction)
     {
-        // Havada hareket kontrolü için ek fonksiyon
         if (direction != Vector3.zero)
         {
-            // Mevcut hızın büyüklüğünü al
-            float currentSpeed = _rigidBody.linearVelocity.magnitude;
-
-            // Hıza göre havada uygulanan kuvveti ölçekle
-            float scaledAirControl = Mathf.Clamp(currentSpeed / maxSpeed, 0.5f, 1f); // 0.5 ile 1 arasında ölçekle
-
-            // Havada hareket için kuvvet uygula
-            Vector3 force = new Vector3(direction.x, 0f, direction.z) * moveSpeed * airControlMultiplier * scaledAirControl;
+            Vector3 force = new Vector3(direction.x, 0f, direction.z) * moveSpeed * airControlMultiplier * 0.1f;
             _rigidBody.AddForce(force, ForceMode.Acceleration);
         }
 
-        // Hızı sınırla
-       // LimitVelocity();
-    }
-
-    /*private void LimitVelocity()
-    {
-        // Mevcut hızı kontrol et
         Vector3 velocity = _rigidBody.linearVelocity;
-
-        // Havada hız sınırını X ve Z ekseninde uygula
         Vector3 horizontalVelocity = new Vector3(velocity.x, 0f, velocity.z);
-        if (horizontalVelocity.magnitude > maxSpeed)
+        if (horizontalVelocity.magnitude > maxAirSpeed)
         {
-            horizontalVelocity = horizontalVelocity.normalized * maxSpeed;
+            horizontalVelocity = horizontalVelocity.normalized * maxAirSpeed;
+            _rigidBody.linearVelocity = new Vector3(horizontalVelocity.x, velocity.y, horizontalVelocity.z);
         }
-
-        // Y eksenindeki hızı koruyarak yeni hız vektörünü uygula
-        _rigidBody.linearVelocity = new Vector3(horizontalVelocity.x, velocity.y, horizontalVelocity.z);
     }
-    */
 }
