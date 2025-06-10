@@ -1,5 +1,11 @@
 using UnityEngine;
 
+// Define the IInteractable interface if it doesn't exist elsewhere
+public interface IInteractable
+{
+    void Interact();
+}
+
 public class NewControlHandler : MonoBehaviour
 {
     [Header("Movement Settings")]
@@ -28,6 +34,8 @@ public class NewControlHandler : MonoBehaviour
     private bool isJumping = false;
     private float currentJumpForce = 0f;
     private float jumpHoldTimer = 0f;
+
+    private float interactRadius = 2f; // Etkileşim yarıçapı (Inspector'dan ayarlayabilirsin)
 
     void Start()
     {
@@ -83,6 +91,11 @@ public class NewControlHandler : MonoBehaviour
         if (!IsGrounded())
         {
             AirMove(moveDirection);
+        }
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            TryInteract();
         }
     }
 
@@ -154,6 +167,20 @@ public class NewControlHandler : MonoBehaviour
         {
             horizontalVelocity = horizontalVelocity.normalized * maxAirSpeed;
             _rigidBody.linearVelocity = new Vector3(horizontalVelocity.x, velocity.y, horizontalVelocity.z);
+        }
+    }
+
+    private void TryInteract()
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, interactRadius);
+        foreach (var hit in hits)
+        {
+            var interactable = hit.GetComponent<IInteractable>();
+            if (interactable != null)
+            {
+                interactable.Interact();
+                break; // İlk bulduğunda dur, istersen hepsini de tetikleyebilirsin
+            }
         }
     }
 }
