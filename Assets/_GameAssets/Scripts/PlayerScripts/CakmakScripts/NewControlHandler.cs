@@ -44,10 +44,14 @@ public class NewControlHandler : MonoBehaviour
         }
 
         _rigidBody.maxAngularVelocity = maxAngularVelocity;
+
+        // Rigidbody'nin uyumasını engelle
+        _rigidBody.sleepThreshold = 0f;
     }
 
     void Update()
     {
+        _rigidBody.WakeUp();
         Vector3 inputDirection = new Vector3(Input.GetAxis("Horizontal"), 0f, Input.GetAxis("Vertical"));
         Vector3 moveDirection = GetCameraRelativeDirection(inputDirection);
 
@@ -97,7 +101,7 @@ public class NewControlHandler : MonoBehaviour
 
     private void Roll(Vector3 direction)
     {
-        if (direction != Vector3.zero)
+        if (direction.magnitude > 0.05f) // Deadzone ekledik
         {
             float currentTorqueMultiplier = IsGrounded() ? torqueMultiplier : torqueMultiplier * airControlMultiplier;
             Vector3 torque = new Vector3(direction.z, 0f, -direction.x) * currentTorqueMultiplier;
