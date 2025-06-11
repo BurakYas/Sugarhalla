@@ -1,4 +1,11 @@
+using System.Collections.Generic;
 using UnityEngine;
+
+// Define the IInteractable interface if it doesn't exist elsewhere
+public interface IInteractable
+{
+    void Interact();
+}
 
 public class NewControlHandler : MonoBehaviour
 {
@@ -28,6 +35,9 @@ public class NewControlHandler : MonoBehaviour
     private bool isJumping = false;
     private float currentJumpForce = 0f;
     private float jumpHoldTimer = 0f;
+
+    private float interactRadius = 1f; // Etkileşim yarıçapı (Inspector'dan ayarlayabilirsin)
+    private List<IInteractable> interactablesInRange = new List<IInteractable>();
 
     void Start()
     {
@@ -87,6 +97,11 @@ public class NewControlHandler : MonoBehaviour
         if (!IsGrounded())
         {
             AirMove(moveDirection);
+        }
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            TryInteract();
         }
     }
 
@@ -158,6 +173,34 @@ public class NewControlHandler : MonoBehaviour
         {
             horizontalVelocity = horizontalVelocity.normalized * maxAirSpeed;
             _rigidBody.linearVelocity = new Vector3(horizontalVelocity.x, velocity.y, horizontalVelocity.z);
+        }
+    }
+
+    private void TryInteract()
+    {
+        if (interactablesInRange.Count > 0)
+        {
+            interactablesInRange[0].Interact();
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        var interactable = other.GetComponent<IInteractable>();
+        if (interactable != null && !interactablesInRange.Contains(interactable))
+        {
+            interactablesInRange.Add(interactable);
+            Debug.Log($"{other.gameObject.name} etkileşim alanına girdi!");
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        var interactable = other.GetComponent<IInteractable>();
+        if (interactable != null && interactablesInRange.Contains(interactable))
+        {
+            interactablesInRange.Remove(interactable);
+            Debug.Log($"{other.gameObject.name} etkileşim alanından çıktı!");
         }
     }
 }
