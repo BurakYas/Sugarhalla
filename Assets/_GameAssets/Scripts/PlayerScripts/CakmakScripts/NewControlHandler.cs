@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 // Define the IInteractable interface if it doesn't exist elsewhere
@@ -35,7 +36,8 @@ public class NewControlHandler : MonoBehaviour
     private float currentJumpForce = 0f;
     private float jumpHoldTimer = 0f;
 
-    private float interactRadius = 2f; // Etkileşim yarıçapı (Inspector'dan ayarlayabilirsin)
+    private float interactRadius = 1f; // Etkileşim yarıçapı (Inspector'dan ayarlayabilirsin)
+    private List<IInteractable> interactablesInRange = new List<IInteractable>();
 
     void Start()
     {
@@ -172,15 +174,29 @@ public class NewControlHandler : MonoBehaviour
 
     private void TryInteract()
     {
-        Collider[] hits = Physics.OverlapSphere(transform.position, interactRadius);
-        foreach (var hit in hits)
+        if (interactablesInRange.Count > 0)
         {
-            var interactable = hit.GetComponent<IInteractable>();
-            if (interactable != null)
-            {
-                interactable.Interact();
-                break; // İlk bulduğunda dur, istersen hepsini de tetikleyebilirsin
-            }
+            interactablesInRange[0].Interact();
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        var interactable = other.GetComponent<IInteractable>();
+        if (interactable != null && !interactablesInRange.Contains(interactable))
+        {
+            interactablesInRange.Add(interactable);
+            Debug.Log($"{other.gameObject.name} etkileşim alanına girdi!");
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        var interactable = other.GetComponent<IInteractable>();
+        if (interactable != null && interactablesInRange.Contains(interactable))
+        {
+            interactablesInRange.Remove(interactable);
+            Debug.Log($"{other.gameObject.name} etkileşim alanından çıktı!");
         }
     }
 }

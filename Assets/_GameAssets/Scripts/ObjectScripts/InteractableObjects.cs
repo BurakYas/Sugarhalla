@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class InteractableObjects : MonoBehaviour, IInteractable
 {
+    [Header("Hareket Ettirilecek Obje")]
+    public MoveBetweenPoint targetObject; // Inspector'dan ata
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -18,6 +21,9 @@ public class InteractableObjects : MonoBehaviour, IInteractable
     public void Interact()
     {
         Debug.Log($"{gameObject.name} ile etkileşime girildi!");
-        // Buraya istediğin işlemi ekleyebilirsin (ör: kapı açma, ışık yakma, animasyon vs.)
+        if (targetObject != null)
+        {
+            targetObject.Interact();
+        }
     }
 }
