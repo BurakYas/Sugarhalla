@@ -10,6 +10,7 @@ public interface IInteractable
 public class NewControlHandler : MonoBehaviour
 {
     [Header("Movement Settings")]
+    [SerializeField] public Transform spawnPoint;
     [SerializeField] public float moveSpeed = 5f;
     [SerializeField] private float minJumpForce = 3f; // Kısa basışta uygulanacak minimum kuvvet
     [SerializeField] private float maxJumpForce = 10f; // Maksimum toplam zıplama kuvveti
@@ -57,6 +58,11 @@ public class NewControlHandler : MonoBehaviour
 
         // Rigidbody'nin uyumasını engelle
         _rigidBody.sleepThreshold = 0f;
+        // Başlangıç pozisyonunu ayarla
+    if (spawnPoint != null)
+    {
+        transform.position = spawnPoint.position;
+    }
     }
 
     void Update()
@@ -116,8 +122,10 @@ public class NewControlHandler : MonoBehaviour
 
     private void Roll(Vector3 direction)
     {
+         
         if (direction.magnitude > 0.05f) // Deadzone ekledik
         {
+
             float currentTorqueMultiplier = IsGrounded() ? torqueMultiplier : torqueMultiplier * airControlMultiplier;
             Vector3 torque = new Vector3(direction.z, 0f, -direction.x) * currentTorqueMultiplier;
             _rigidBody.AddTorque(torque, ForceMode.Force);

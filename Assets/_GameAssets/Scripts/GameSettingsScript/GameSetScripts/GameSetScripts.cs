@@ -15,7 +15,23 @@ public class GameSetScripts : MonoBehaviour
     public void FinishLevel()
     {
         Debug.Log("Bölüm bitti!");
-        // İleride ana menüye geçiş veya başka işlemler buraya eklenir
+        // Karakteri spawnPoint'e gönder
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            var handler = player.GetComponent<NewControlHandler>();
+            if (handler != null && handler.spawnPoint != null)
+            {
+                player.transform.position = handler.spawnPoint.position;
+                // Rigidbody hızını da sıfırla ki fırlamasın
+                var rb = player.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
+            }
+        }
     }
 
 }
