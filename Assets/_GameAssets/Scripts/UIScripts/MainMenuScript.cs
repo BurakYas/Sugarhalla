@@ -168,9 +168,6 @@ public class MainMenuScript : MonoBehaviour
 
     public void PlayHoverSound()
     {
-        if (hoverSource != null && soundSource != null && soundSource.volume > 0.01f)
-        {
-            hoverSource.Play();
-        }
+       hoverSource.PlayOneShot(hoverSource.clip);
     }
 }
