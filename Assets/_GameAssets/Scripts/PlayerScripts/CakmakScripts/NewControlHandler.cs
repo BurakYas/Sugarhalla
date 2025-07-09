@@ -27,6 +27,8 @@ public class NewControlHandler : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private Transform cameraTransform;
+
+    private SkillManagerScript skillManager;
     private Rigidbody _rigidBody;
 
     private bool _isGrounded = false;
@@ -54,15 +56,15 @@ public class NewControlHandler : MonoBehaviour
             cameraTransform = Camera.main.transform;
         }
 
-        _rigidBody.maxAngularVelocity = maxAngularVelocity;
+        // SkillManagerScript'i aynı objede otomatik bul
+        skillManager = GetComponent<SkillManagerScript>();
 
-        // Rigidbody'nin uyumasını engelle
+        _rigidBody.maxAngularVelocity = maxAngularVelocity;
         _rigidBody.sleepThreshold = 0f;
-        // Başlangıç pozisyonunu ayarla
-    if (spawnPoint != null)
-    {
-        transform.position = spawnPoint.position;
-    }
+        if (spawnPoint != null)
+        {
+            transform.position = spawnPoint.position;
+        }
     }
 
     void Update()
@@ -72,6 +74,14 @@ public class NewControlHandler : MonoBehaviour
         Vector3 moveDirection = GetCameraRelativeDirection(inputDirection);
 
         Roll(moveDirection);
+
+        // Dash inputu
+        if (Input.GetKeyDown(KeyCode.Q) && skillManager != null)
+        {
+            Debug.Log("Dash skill activated");
+            Vector3 dashDir = inputDirection.magnitude > 0.1f ? moveDirection : transform.forward;
+            skillManager.ActivateSkill("Dash", dashDir);
+        }
 
         // Zıplama başlat
         if (Input.GetKeyDown(KeyCode.Space) && IsGrounded())
