@@ -6,8 +6,7 @@ public class PlayerHealthController : MonoBehaviour
     private int maxHealth = 100; // Maksimum sağlık
     private int currentHealth;  // Mevcut sağlık
     [SerializeField] private float fallDamageThreshold = 10f; // Düşüş hasarı için hız eşiği
-    [SerializeField] private int fallDamageAmount = 20; // Düşüş hasarı miktarı
-
+    
     private Rigidbody _rigidBody; // Rigidbody referansı
     [SerializeField] private LayerMask _groundLayer; // Zemin katmanı için LayerMask
 

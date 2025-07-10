@@ -20,7 +20,7 @@ public class NewControlHandler : MonoBehaviour
     [SerializeField] public float torqueMultiplier = 1.5f;
     [SerializeField] private float airControlMultiplier = 0.5f;
     [SerializeField] public float maxAngularVelocity = 10f;
-    [SerializeField] private float maxSpeed = 20f;
+    // [SerializeField] private float maxSpeed = 20f;
     [SerializeField] private float maxAirSpeed = 3f;
 
     public bool canJump;
@@ -85,6 +85,13 @@ public class NewControlHandler : MonoBehaviour
             Debug.Log("Dash skill activated");
             Vector3 dashDir = inputDirection.magnitude > 0.1f ? moveDirection : transform.forward;
             skillManager.ActivateSkill("Dash", dashDir);
+        }
+
+        // Spin inputu
+        if (Input.GetKeyDown(KeyCode.R) && skillManager != null)
+        {
+            Debug.Log("Spin skill activated");
+            skillManager.ActivateSkill("Spin", Vector3.zero);
         }
 
         // Zıplama başlat

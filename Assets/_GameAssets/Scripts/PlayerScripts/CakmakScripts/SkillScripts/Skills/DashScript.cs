@@ -26,6 +26,9 @@ public class DashScript : MonoBehaviour
         dashTimer = 0f;
         lastDashTime = Time.time;
 
+        // Yalnızca yatay düzlemde dash
+        direction.y = 0f;
+
         rb.linearVelocity = Vector3.zero;
         rb.AddForce(direction.normalized * dashForce, ForceMode.VelocityChange);
     }
