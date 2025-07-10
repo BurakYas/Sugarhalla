@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Audio; // AudioMixer için ekledik
+using DG.Tweening;
 
 public class MainMenuScript : MonoBehaviour
 {
@@ -109,6 +110,7 @@ public class MainMenuScript : MonoBehaviour
     public void NewGame()
     {
         Debug.Log("Yeni oyun başlatıldı!");
+         DOTween.KillAll();
         SceneManager.LoadScene("Tutorial");
     }
 

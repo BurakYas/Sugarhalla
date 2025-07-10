@@ -3,10 +3,12 @@ using UnityEngine;
 public class SkillManagerScript : MonoBehaviour
 {
     private DashScript dashScript;
+    private NewControlHandler controlHandler;
 
     void Awake()
     {
         dashScript = GetComponent<DashScript>();
+        controlHandler = GetComponent<NewControlHandler>();
     }
 
     public void ActivateSkill(string skillName, Vector3 direction)
@@ -17,5 +19,11 @@ public class SkillManagerScript : MonoBehaviour
             dashScript.Dash(direction);
         }
         // Diğer skill'ler için else if ekleyebilirsin
+    }
+
+    public void EnableDoubleJump(bool enabled)
+    {
+        if (controlHandler != null)
+            controlHandler.maxJumps = enabled ? 2 : 1;
     }
 }

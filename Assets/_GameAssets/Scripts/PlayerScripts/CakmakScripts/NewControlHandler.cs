@@ -31,16 +31,20 @@ public class NewControlHandler : MonoBehaviour
     private SkillManagerScript skillManager;
     private Rigidbody _rigidBody;
 
-    private bool _isGrounded = false;
+    public bool _isGrounded = false;
     private Vector3 previousVelocity;
 
     // Variable jump değişkenleri
     private bool isJumping = false;
     private float currentJumpForce = 0f;
     private float jumpHoldTimer = 0f;
+    public int jumpCount = 0;
+    public int maxJumps = 1; // Skill açılınca 2 yapabilirsin
 
-    private float interactRadius = 1f; // Etkileşim yarıçapı (Inspector'dan ayarlayabilirsin)
+    public float interactRadius = 1f; // Etkileşim yarıçapı (Inspector'dan ayarlayabilirsin)
     private List<IInteractable> interactablesInRange = new List<IInteractable>();
+
+    public bool wasGrounded = false;
 
     void Start()
     {
@@ -84,9 +88,10 @@ public class NewControlHandler : MonoBehaviour
         }
 
         // Zıplama başlat
-        if (Input.GetKeyDown(KeyCode.Space) && IsGrounded())
+        if (Input.GetKeyDown(KeyCode.Space) && jumpCount < maxJumps)
         {
             Jump(moveDirection);
+            jumpCount++;
             isJumping = true;
             jumpHoldTimer = 0f;
             currentJumpForce = minJumpForce;
@@ -118,6 +123,27 @@ public class NewControlHandler : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E))
         {
             TryInteract();
+        }
+
+        // Yere yeni inildiyse jumpCount'u sıfırla
+        bool grounded = IsGrounded();
+        if (grounded && !wasGrounded)
+        {
+            jumpCount = 0;
+        }
+        wasGrounded = grounded;
+
+        // Kodu buraya ekledik
+        if (Input.GetKeyDown(KeyCode.K) && skillManager != null)
+        {
+            skillManager.EnableDoubleJump(true); // Double jump açılır
+            Debug.Log("Double Jump açıldı!");
+        }
+
+        if (Input.GetKeyDown(KeyCode.L) && skillManager != null)
+        {
+            skillManager.EnableDoubleJump(false); // Double jump kapanır
+            Debug.Log("Double Jump kapatıldı!");
         }
     }
 
