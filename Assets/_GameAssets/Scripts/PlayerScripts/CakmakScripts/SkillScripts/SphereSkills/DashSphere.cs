@@ -1,20 +1,21 @@
 using UnityEngine;
 
-public class DashScript : MonoBehaviour
+public class DashSphere : MonoBehaviour
 {
-    public float dashForce = 20f;
-    public float dashDuration = 0.2f;
+    [Header("Dash Ayarları")]
+    public float dashForce = 18f;
+    public float dashDuration = 0.18f;
     public float dashCooldown = 1f;
 
     private Rigidbody rb;
     private bool isDashing = false;
     private float dashTimer = 0f;
     private float lastDashTime = -Mathf.Infinity;
+    private Vector3 dashDirection;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        
     }
 
     public void Dash(Vector3 direction)
@@ -28,9 +29,10 @@ public class DashScript : MonoBehaviour
 
         // Yalnızca yatay düzlemde dash
         direction.y = 0f;
+        dashDirection = direction.normalized;
 
-        rb.linearVelocity = Vector3.zero;
-        rb.AddForce(direction.normalized * dashForce, ForceMode.VelocityChange);
+        // rb.linearVelocity = Vector3.zero; // Bunu kaldır!
+        rb.AddForce(dashDirection * dashForce, ForceMode.Force); // VelocityChange yerine Force kullan
     }
 
     void Update()
@@ -41,9 +43,8 @@ public class DashScript : MonoBehaviour
             if (dashTimer >= dashDuration)
             {
                 isDashing = false;
-                // rb.linearVelocity = Vector3.zero; // Bunu kaldır!
+                // Dash bitince ekstra bir şey yapmak istersen buraya ekle
             }
         }
-        // Artık burada input kontrolü yok!
     }
 }
