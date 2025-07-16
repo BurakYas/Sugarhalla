@@ -2,20 +2,34 @@ using UnityEngine;
 
 public class CameraScript : MonoBehaviour
 {
-    [SerializeField] private float _rotationSpeed = 100f; // Kameranın dönüş hızı
+    public Transform target;
+    public LayerMask environmentLayer;
+    public float minDistance = 1f;
+    public float maxDistance = 5f;
+    public float smoothSpeed = 10f;
+    private Vector3 dollyDir;
+    private float currentDistance;
 
-    void Update()
+    void Start()
     {
-        // Q tuşuna basıldığında sola döndür
-        if (Input.GetKey(KeyCode.Q))
+        dollyDir = (transform.position - target.position).normalized;
+        currentDistance = maxDistance;
+    }
+
+    void LateUpdate()
+    {
+        Vector3 desiredPosition = target.position + dollyDir * maxDistance;
+        RaycastHit hit;
+
+        if (Physics.Raycast(target.position, dollyDir, out hit, maxDistance, environmentLayer))
         {
-            transform.Rotate(0f, -_rotationSpeed * Time.deltaTime, 0f, Space.World);
+            currentDistance = Mathf.Clamp(hit.distance, minDistance, maxDistance);
+        }
+        else
+        {
+            currentDistance = maxDistance;
         }
 
-        // E tuşuna basıldığında sağa döndür
-        if (Input.GetKey(KeyCode.E))
-        {
-            transform.Rotate(0f, _rotationSpeed * Time.deltaTime, 0f, Space.World);
-        }
+        transform.position = Vector3.Lerp(transform.position, target.position + dollyDir * currentDistance, Time.deltaTime * smoothSpeed);
     }
 }
